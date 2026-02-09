@@ -4,15 +4,9 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+
+
+
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
@@ -34,3 +28,49 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+
+```bash
+Initialize a Next.js project:
+
+npx create-next-app@14.2.23
+npx create-next-app@latest
+
+
+Install Convex:
+
+npm install convex
+
+
+Initialize Convex (this creates a project and local setup):
+
+npx convex dev
+
+
+Install Clerk for Next.js:
+
+npm install @clerk/nextjs
+
+
+Install Svix (for webhook verification):
+
+npm install svix
+
+
+Install Stream SDKs:
+
+For the client (React side):
+
+npm install @stream-io/video-react-sdk
+
+
+For the server (Node side):
+
+npm install stream-io/node-sdk
+
+
+To run the Next.js app locally:
+
+npm run dev
+```
