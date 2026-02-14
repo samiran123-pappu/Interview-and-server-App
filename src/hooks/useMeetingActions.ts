@@ -25,8 +25,8 @@ const useMeetingActions = () => {
           custom: {
             description: "Instant Meeting",
           },
+          members: [{ user_id: user.id }],
         },
-        members: [{ user_id: user.id }],
       });
 
       router.push(`/meeting/${call.id}`);

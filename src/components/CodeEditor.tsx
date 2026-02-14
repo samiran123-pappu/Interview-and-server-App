@@ -24,9 +24,9 @@ function CodeEditor() {
   };
 
   return (
-    <ResizablePanelGroup orientation="vertical" className="h-full min-h-0">
+    <ResizablePanelGroup orientation="vertical" className="h-full">
       {/* QUESTION SECTION */}
-      <ResizablePanel className="min-h-0">
+      <ResizablePanel defaultSize="40%" minSize="20%">
         <ScrollArea className="h-full">
           <div className="p-6">
             <div className="max-w-4xl mx-auto space-y-6">
@@ -57,7 +57,7 @@ function CodeEditor() {
                   </Select>
 
                   <Select value={language} onValueChange={handleLanguageChange}>
-                    <SelectTrigger className="w-[150px]">
+                    <SelectTrigger className="w-37.5`">
                       {/* SELECT VALUE */}
                       <SelectValue>
                         <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ function CodeEditor() {
       <ResizableHandle withHandle />
 
       {/* CODE EDITOR */}
-      <ResizablePanel defaultSize={60} maxSize={100} className="min-h-0">
+      <ResizablePanel defaultSize="60%" minSize="20%">
         <div className="h-full relative">
           <Editor
             height={"100%"}

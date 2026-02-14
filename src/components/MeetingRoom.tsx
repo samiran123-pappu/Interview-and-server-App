@@ -38,11 +38,10 @@ function MeetingRoom() {
 
   return (
     <div className="h-[calc(100vh-4rem-1px)] overflow-hidden">
-      <ResizablePanelGroup orientation="horizontal" className="min-h-0">
+      <ResizablePanelGroup orientation="horizontal" className="h-full">
         <ResizablePanel
-          defaultSize={35}
-          minSize={25}
-          maxSize={100}
+          defaultSize="35%"
+          minSize="25%"
           className="relative min-h-0 overflow-hidden"
         >
           {/* VIDEO LAYOUT */}
@@ -99,8 +98,10 @@ function MeetingRoom() {
 
         <ResizableHandle withHandle />
 
-        <ResizablePanel defaultSize={65} minSize={25} className="min-h-0 overflow-hidden">
-          <CodeEditor />
+        <ResizablePanel defaultSize="65%" minSize="25%" className="min-h-0 overflow-hidden">
+          <div className="h-full w-full overflow-hidden">
+            <CodeEditor />
+          </div>
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
