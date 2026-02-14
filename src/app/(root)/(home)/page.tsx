@@ -29,7 +29,6 @@ export default function Home() {
       default:
         router.push(`/${title.toLocaleLowerCase()}`);
     }
-
   }
 
   return <div className="container max-w-7xl mx-auto p-6">
