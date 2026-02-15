@@ -88,4 +88,33 @@ npm run dev
 // pages/blog/[slug].js	/blog/a	{ slug: 'a' }
 // pages/blog/[slug].js	/blog/b	{ slug: 'b' }
 // pages/blog/[slug].js	/blog/c	{ slug: 'c' }
+
+```
+
+bash```
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /dashboard
+├ ƒ /feed
+├ ƒ /leaderboard
+├ ƒ /meeting/[id]
+├ ƒ /messages
+├ ƒ /profile/[id]
+├ ƒ /recordings
+├ ƒ /schedule
+├ ƒ /spaces
+└ ƒ /spaces/[id]
+
+
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+# Deployment used by `npx convex dev`
+CONVEX_DEPLOYMENT=
+NEXT_PUBLIC_CONVEX_URL=
+
+NEXT_PUBLIC_CONVEX_SITE_URL=
+NEXT_PUBLIC_STREAM_API_KEY=
+STREAM_SECRET_KEY=
+
+
 ```
