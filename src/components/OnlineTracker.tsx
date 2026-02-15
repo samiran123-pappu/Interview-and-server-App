@@ -11,11 +11,11 @@ import { useUser } from "@clerk/nextjs";
  * Mount this in the root layout.
  */
 function OnlineTracker() {
-  const { user } = useUser();
+  const { user, isLoaded, isSignedIn } = useUser();
   const setOnlineStatus = useMutation(api.users.setOnlineStatus);
 
   useEffect(() => {
-    if (!user) return;
+    if (!isLoaded || !isSignedIn || !user) return;
 
     // Set online
     setOnlineStatus({ isOnline: true });

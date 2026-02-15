@@ -6,12 +6,15 @@ import { api } from "../../convex/_generated/api";
 
 
 export const useUserRole = () => {
-    const user = useUser();
-    const userData = useQuery(api.users.getUserByClerkId,{
-        clerkId: user?.user?.id || "",
-    })
+    const { user, isLoaded, isSignedIn } = useUser();
+    const userData = useQuery(
+        api.users.getUserByClerkId,
+        isLoaded && isSignedIn && user?.id
+            ? { clerkId: user.id }
+            : "skip"
+    );
 
-    const isLoading = userData === undefined;
+    const isLoading = !isLoaded || userData === undefined;
 
     return {
         isLoading,

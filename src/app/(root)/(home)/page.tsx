@@ -23,15 +23,16 @@ const STATUS_EMOJIS = ["💻", "🎯", "☕", "🔥", "📚", "🎮", "🎵", "�
 
 export default function Home() {
   const router = useRouter();
-  const { user: clerkUser } = useUser();
+  const { user: clerkUser, isLoaded, isSignedIn } = useUser();
+  const authenticated = isLoaded && isSignedIn;
   const { isInterviewer, isCandidate } = useUserRole()
   const [showModal, setShowModal] = useState(false)
-  const interviews = useQuery(api.interviews.getMyInterviews);
-  const me = useQuery(api.users.getMe);
-  const mySpaces = useQuery(api.spaces.getMySpaces);
-  const unreadNotifs = useQuery(api.notifications.getUnreadCount);
-  const users = useQuery(api.users.getUsers);
-  const statuses = useQuery(api.statusUpdates.getActiveStatuses);
+  const interviews = useQuery(api.interviews.getMyInterviews, authenticated ? {} : "skip");
+  const me = useQuery(api.users.getMe, authenticated ? {} : "skip");
+  const mySpaces = useQuery(api.spaces.getMySpaces, authenticated ? {} : "skip");
+  const unreadNotifs = useQuery(api.notifications.getUnreadCount, authenticated ? {} : "skip");
+  const users = useQuery(api.users.getUsers, authenticated ? {} : "skip");
+  const statuses = useQuery(api.statusUpdates.getActiveStatuses, authenticated ? {} : "skip");
   const setStatus = useMutation(api.statusUpdates.setStatus);
   const clearStatus = useMutation(api.statusUpdates.clearStatus);
   const [modalType, setModalType] = useState<"start" | "join">();

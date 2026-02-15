@@ -3,6 +3,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useUser } from "@clerk/nextjs";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -42,8 +43,9 @@ const NOTIF_ICONS: Record<string, React.ReactNode> = {
 };
 
 function NotificationBell() {
-  const notifications = useQuery(api.notifications.getMyNotifications);
-  const unreadCount = useQuery(api.notifications.getUnreadCount);
+  const { isLoaded, isSignedIn } = useUser();
+  const notifications = useQuery(api.notifications.getMyNotifications, isLoaded && isSignedIn ? {} : "skip");
+  const unreadCount = useQuery(api.notifications.getUnreadCount, isLoaded && isSignedIn ? {} : "skip");
   const markAsRead = useMutation(api.notifications.markAsRead);
   const markAllAsRead = useMutation(api.notifications.markAllAsRead);
   const deleteNotification = useMutation(api.notifications.remove);

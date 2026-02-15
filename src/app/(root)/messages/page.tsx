@@ -26,9 +26,10 @@ import toast from "react-hot-toast";
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "🎉", "🔥", "👀", "💯", "🙌"];
 
 function MessagesPage() {
-  const { user: clerkUser } = useUser();
-  const users = useQuery(api.users.getUsers);
-  const conversations = useQuery(api.conversations.getMyConversations);
+  const { user: clerkUser, isLoaded, isSignedIn } = useUser();
+  const authenticated = isLoaded && isSignedIn;
+  const users = useQuery(api.users.getUsers, authenticated ? {} : "skip");
+  const conversations = useQuery(api.conversations.getMyConversations, authenticated ? {} : "skip");
   const getOrCreateConvo = useMutation(api.conversations.getOrCreate);
   const sendMessage = useMutation(api.messages.send);
   const toggleReaction = useMutation(api.messages.toggleReaction);
