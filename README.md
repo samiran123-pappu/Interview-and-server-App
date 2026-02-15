@@ -91,7 +91,7 @@ npm run dev
 
 ```
 
-bash```
+```bash
 ┌ ƒ /
 ├ ƒ /_not-found
 ├ ƒ /dashboard
