@@ -8,6 +8,7 @@ import { api } from "../../../../convex/_generated/api";
 import { useRouter } from "next/navigation"
 import { useQuery } from "convex/react"
 import MeetingModal from "@/components/MeetingModal"
+import MeetingCard from "@/components/MeetingCard"
 // import MeetingCard from "@/components/MeetingCard";
 
 export default function Home() {
