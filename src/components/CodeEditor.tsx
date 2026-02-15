@@ -13,12 +13,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import {
   AlertCircleIcon, BookIcon, LightbulbIcon, PlayIcon, RotateCcwIcon,
   Loader2Icon, TerminalIcon, CheckCircle2Icon, XCircleIcon,
-  ChevronDownIcon, DatabaseIcon, SparklesIcon, CodeIcon,
+  ChevronDownIcon, DatabaseIcon, SparklesIcon, CodeIcon, SaveIcon,
 } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import Editor from "@monaco-editor/react";
 import type { Doc } from "../../convex/_generated/dataModel";
+import toast from "react-hot-toast";
 
 type Question = Doc<"questions">;
 
@@ -57,6 +58,7 @@ function CodeEditor() {
   // ── Convex ──────────────────────────────────────────────────────────
   const questions = useQuery(api.questions.getAll);
   const seedMutation = useMutation(api.questions.seed);
+  const submitCode = useMutation(api.codeSubmissions.submit);
 
   // ── Local state ─────────────────────────────────────────────────────
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
@@ -124,12 +126,34 @@ function CodeEditor() {
     setActiveTab("output");
     setRunSuccess(null);
     setOutput("Running...\n");
+    const startTime = Date.now();
     try {
       const lang = LANGUAGES.find((l) => l.id === language)!;
       const result = await executeCode(lang.pistonId, lang.pistonVersion, codeRef.current, stdin);
       const out = (result.stdout + result.stderr).trim() || "No output";
+      const elapsed = Date.now() - startTime;
       setOutput(out);
       setRunSuccess(result.code === 0);
+
+      // Track submission
+      if (selectedQuestion) {
+        try {
+          await submitCode({
+            questionId: selectedQuestion._id,
+            questionTitle: selectedQuestion.title,
+            language: language,
+            code: codeRef.current,
+            output: out.slice(0, 500),
+            status: result.code === 0 ? "success" : "error",
+            executionTime: elapsed,
+          });
+          if (result.code === 0) {
+            toast.success("+10 XP earned!", { icon: "⚡" });
+          }
+        } catch {
+          // Silently fail submission tracking
+        }
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       setOutput(`Execution Error: ${msg}`);
@@ -137,7 +161,7 @@ function CodeEditor() {
     } finally {
       setIsRunning(false);
     }
-  }, [language, stdin]);
+  }, [language, stdin, selectedQuestion, submitCode]);
 
   // ── Initialize code when question loads ────────────────────────────
   const prevQId = useRef<string | null>(null);

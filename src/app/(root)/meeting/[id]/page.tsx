@@ -33,7 +33,7 @@ function MeetingPage() {
                 {!isSetupComplete ? (
                     <MeetingSetup onSetupComplete={() => setIsSetupComplete(true)} />
                 ):(
-                    <MeetingRoom />
+                    <MeetingRoom meetingId={id as string} />
                 )}
             </StreamTheme>
         </StreamCall>

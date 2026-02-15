@@ -8,10 +8,18 @@
  * @module
  */
 
+import type * as channels from "../channels.js";
+import type * as codeSubmissions from "../codeSubmissions.js";
 import type * as comments from "../comments.js";
+import type * as conversations from "../conversations.js";
 import type * as http from "../http.js";
 import type * as interviews from "../interviews.js";
+import type * as messages from "../messages.js";
+import type * as notifications from "../notifications.js";
+import type * as posts from "../posts.js";
 import type * as questions from "../questions.js";
+import type * as spaces from "../spaces.js";
+import type * as statusUpdates from "../statusUpdates.js";
 import type * as users from "../users.js";
 
 import type {
@@ -21,10 +29,18 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  channels: typeof channels;
+  codeSubmissions: typeof codeSubmissions;
   comments: typeof comments;
+  conversations: typeof conversations;
   http: typeof http;
   interviews: typeof interviews;
+  messages: typeof messages;
+  notifications: typeof notifications;
+  posts: typeof posts;
   questions: typeof questions;
+  spaces: typeof spaces;
+  statusUpdates: typeof statusUpdates;
   users: typeof users;
 }>;
 

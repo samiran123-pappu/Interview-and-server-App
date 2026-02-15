@@ -19,8 +19,9 @@ import {
 import { Button } from "./ui/button";
 import EndCallButton from "./EndCallButton";
 import CodeEditor from "./CodeEditor";
+import MeetingChat from "./MeetingChat";
 
-function MeetingRoom() {
+function MeetingRoom({ meetingId }: { meetingId?: string }) {
   const router = useRouter();
   const [layout, setLayout] = useState<"grid" | "speaker">("speaker");
   const [showParticipants, setShowParticipants] = useState(false);
@@ -104,6 +105,9 @@ function MeetingRoom() {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
+
+      {/* In-meeting Chat */}
+      {meetingId && <MeetingChat meetingId={meetingId} />}
     </div>
   );
 }
