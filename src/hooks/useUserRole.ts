@@ -19,5 +19,6 @@ export const useUserRole = () => {
     return {
         isLoading,
         isInterviewer: userData?.role === "interviewer",
+        
     }
 }
