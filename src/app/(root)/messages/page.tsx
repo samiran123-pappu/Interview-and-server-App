@@ -18,6 +18,7 @@ import {
   TrashIcon,
   CircleIcon,
   PenIcon,
+  ArrowLeftIcon,
 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { format } from "date-fns";
@@ -142,7 +143,7 @@ function MessagesPage() {
   return (
     <div className="h-[calc(100vh-4rem-1px)] flex overflow-hidden">
       {/* Sidebar - Conversations */}
-      <div className="w-72 border-r flex flex-col shrink-0">
+      <div className={`w-full md:w-72 border-r flex flex-col shrink-0 ${selectedConvoId ? "hidden md:flex" : "flex"}`}>
         <div className="p-4 border-b">
           <h2 className="font-semibold text-lg flex items-center gap-2">
             <MessageSquareIcon className="h-5 w-5 text-blue-500" />
@@ -259,7 +260,7 @@ function MessagesPage() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={`flex-1 flex flex-col min-w-0 ${selectedConvoId ? "flex" : "hidden md:flex"}`}>
         {!selectedConvoId ? (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
             <div className="text-center">
@@ -273,6 +274,12 @@ function MessagesPage() {
             {/* Chat header with user info */}
             {selectedConvoOther && (
               <div className="flex items-center gap-3 px-4 py-2.5 border-b bg-muted/20 shrink-0">
+                <button
+                  className="md:hidden p-1 -ml-1 mr-1 rounded-md hover:bg-accent transition-colors"
+                  onClick={() => setSelectedConvoId(null)}
+                >
+                  <ArrowLeftIcon className="h-5 w-5" />
+                </button>
                 <div className="relative">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={selectedConvoOther.image} />
