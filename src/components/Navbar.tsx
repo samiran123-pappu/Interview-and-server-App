@@ -9,6 +9,7 @@ import {
   NewspaperIcon,
   TrophyIcon,
   UserIcon,
+  FilmIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -21,6 +22,7 @@ const NAV_LINKS = [
   { href: "/spaces", icon: HashIcon, label: "Spaces" },
   { href: "/feed", icon: NewspaperIcon, label: "Feed" },
   { href: "/messages", icon: MessageSquareIcon, label: "Messages" },
+  { href: "/vidsnap", icon: FilmIcon, label: "VidSnap" },
   { href: "/leaderboard", icon: TrophyIcon, label: "Leaderboard" },
 ]
 
@@ -43,7 +45,7 @@ function Navbar() {
         </Link>
 
         {/* Navigation Links */}
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
           {NAV_LINKS.map((link) => {
             const isActive =
               link.href === "/"

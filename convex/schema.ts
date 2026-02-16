@@ -234,4 +234,27 @@ export default defineSchema({
     emoji: v.optional(v.string()),
     expiresAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  // ─── REELS (VidSnap AI – slideshow reels from images + narration) ─
+  reels: defineTable({
+    title: v.string(),
+    description: v.string(),
+    authorId: v.string(),
+    authorName: v.string(),
+    authorImage: v.optional(v.string()),
+    imageUrls: v.array(v.string()),
+    storageId: v.optional(v.id("_storage")),
+    videoUrl: v.optional(v.string()),
+    status: v.union(
+      v.literal("processing"),
+      v.literal("ready"),
+      v.literal("failed")
+    ),
+    duration: v.optional(v.number()),
+    likeCount: v.number(),
+    likedBy: v.array(v.string()),
+    viewCount: v.number(),
+  })
+    .index("by_author", ["authorId"])
+    .index("by_status", ["status"]),
 })
