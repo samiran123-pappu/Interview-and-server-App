@@ -22,6 +22,8 @@ import {
   SparklesIcon,
   FilmIcon,
   GalleryHorizontalEndIcon,
+  DownloadIcon,
+  Share2Icon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
@@ -912,6 +914,68 @@ function ReelCard({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Download */}
+            {reel.videoUrl && (
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  try {
+                    toast.loading("Downloading...", { id: "dl" });
+                    const res = await fetch(reel.videoUrl!);
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `${reel.title.replace(/[^a-zA-Z0-9]/g, "_")}.webm`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                    toast.success("Downloaded!", { id: "dl" });
+                  } catch {
+                    toast.error("Download failed", { id: "dl" });
+                  }
+                }}
+                className="text-muted-foreground hover:text-blue-500 transition-colors"
+                title="Download reel"
+              >
+                <DownloadIcon className="h-3.5 w-3.5" />
+              </button>
+            )}
+
+            {/* Share */}
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                const shareData: ShareData = {
+                  title: reel.title,
+                  text: `${reel.title} — ${reel.description.slice(0, 100)}`,
+                };
+
+                if (reel.videoUrl) {
+                  shareData.url = reel.videoUrl;
+                }
+
+                // Use native share if available (mobile), otherwise copy link
+                if (navigator.share && reel.videoUrl) {
+                  try {
+                    await navigator.share(shareData);
+                  } catch {
+                    // User cancelled — ignore
+                  }
+                } else if (reel.videoUrl) {
+                  await navigator.clipboard.writeText(reel.videoUrl);
+                  toast.success("Link copied to clipboard!");
+                } else {
+                  toast.error("Video not ready yet");
+                }
+              }}
+              className="text-muted-foreground hover:text-green-500 transition-colors"
+              title="Share reel"
+            >
+              <Share2Icon className="h-3.5 w-3.5" />
+            </button>
+
             <span className="text-[10px] text-muted-foreground">
               {format(new Date(reel._creationTime), "MMM d")}
             </span>
