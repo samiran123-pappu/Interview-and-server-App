@@ -113,6 +113,30 @@ function VidSnapPage() {
     setProgress(0);
 
     try {
+      // ── Step 1: Generate TTS audio from narration text ──
+      let audioBuffer: AudioBuffer | null = null;
+      try {
+        toast.loading("Generating voice narration...", { id: "tts" });
+        const ttsRes = await fetch("/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: description }),
+        });
+
+        if (ttsRes.ok) {
+          const audioCtxForDecode = new AudioContext();
+          const arrayBuf = await ttsRes.arrayBuffer();
+          audioBuffer = await audioCtxForDecode.decodeAudioData(arrayBuf);
+          await audioCtxForDecode.close();
+          toast.success("Voice narration ready!", { id: "tts" });
+        } else {
+          toast.error("TTS failed — generating silent reel", { id: "tts" });
+        }
+      } catch (ttsErr) {
+        console.warn("TTS unavailable, creating silent reel:", ttsErr);
+        toast.error("TTS unavailable — generating silent reel", { id: "tts" });
+      }
+
       const canvas = document.createElement("canvas");
       canvas.width = 1080;
       canvas.height = 1920;
@@ -137,35 +161,81 @@ function VidSnapPage() {
       const totalFrames = loadedImages.length * SECONDS_PER_IMAGE * FPS;
       const duration = loadedImages.length * SECONDS_PER_IMAGE;
 
-      // MediaRecorder setup – pick a codec the browser supports
-      const stream = canvas.captureStream(FPS);
+      // Use captureStream(0) — we manually request each frame after drawing.
+      // captureStream(fps) on detached canvases is unreliable in many browsers.
+      const canvasStream = canvas.captureStream(0);
+      const videoTrack = canvasStream.getVideoTracks()[0];
+
+      // ── Mix audio into the stream if TTS audio is available ──
+      let audioCtx: AudioContext | null = null;
+      let audioSource: AudioBufferSourceNode | null = null;
+
+      if (audioBuffer) {
+        audioCtx = new AudioContext({ sampleRate: audioBuffer.sampleRate });
+        const destination = audioCtx.createMediaStreamDestination();
+        audioSource = audioCtx.createBufferSource();
+        audioSource.buffer = audioBuffer;
+        audioSource.connect(destination);
+
+        // Add audio tracks to the canvas stream
+        for (const track of destination.stream.getAudioTracks()) {
+          canvasStream.addTrack(track);
+        }
+      }
+
       const mimeType = [
+        "video/webm;codecs=vp9,opus",
+        "video/webm;codecs=vp8,opus",
         "video/webm;codecs=vp9",
         "video/webm;codecs=vp8",
         "video/webm",
         "video/mp4",
       ].find((m) => MediaRecorder.isTypeSupported(m)) || "";
-      const recorder = new MediaRecorder(stream, {
+
+      console.log("MediaRecorder mimeType:", mimeType || "(default)");
+
+      const recorder = new MediaRecorder(canvasStream, {
         ...(mimeType ? { mimeType } : {}),
-        videoBitsPerSecond: 5_000_000,
+        videoBitsPerSecond: 4_000_000,
       });
 
       const chunks: BlobPart[] = [];
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunks.push(e.data);
       };
+      recorder.onerror = (e) => {
+        console.error("MediaRecorder error:", e);
+      };
 
       const recordingDone = new Promise<Blob>((resolve) => {
         recorder.onstop = () => {
-          resolve(new Blob(chunks, { type: mimeType || "video/webm" }));
+          console.log(`Recording stopped. ${chunks.length} chunks collected.`);
+          const blobType = mimeType.split(";")[0] || "video/webm";
+          resolve(new Blob(chunks, { type: blobType }));
         };
       });
 
-      recorder.start();
+      // Request data every 500ms
+      recorder.start(500);
+      console.log("Recorder state:", recorder.state);
 
-      // Render frames
+      // Start TTS audio playback in sync with recording
+      if (audioSource && audioCtx) {
+        audioSource.start(0);
+      }
+
+      // Draw the very first frame and request it so MediaRecorder has content immediately
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if ("requestFrame" in videoTrack) {
+        (videoTrack as CanvasCaptureMediaStreamTrack).requestFrame();
+      }
+
+      // Render frames at real-time speed, explicitly requesting each frame capture.
       const descWords = description.split(" ");
       const wordsPerImage = Math.ceil(descWords.length / loadedImages.length);
+      const frameDuration = 1000 / FPS;
+      const renderStartTime = performance.now();
 
       for (let frame = 0; frame < totalFrames; frame++) {
         const imgIndex = Math.min(
@@ -280,38 +350,96 @@ function VidSnapPage() {
 
         setProgress(Math.round(((frame + 1) / totalFrames) * 100));
 
-        // Yield to keep UI responsive
-        if (frame % FPS === 0) {
-          await new Promise((r) => setTimeout(r, 0));
+        // ── Tell the stream to capture this frame ──
+        if ("requestFrame" in videoTrack) {
+          (videoTrack as CanvasCaptureMediaStreamTrack).requestFrame();
+        }
+
+        // ── Wait until the correct wall-clock time for this frame ──
+        // This keeps MediaRecorder recording at actual real-time speed.
+        const targetTime = renderStartTime + (frame + 1) * frameDuration;
+        const now = performance.now();
+        if (targetTime > now) {
+          await new Promise((r) => setTimeout(r, targetTime - now));
         }
       }
 
       recorder.stop();
+
+      // Stop audio playback and clean up AudioContext
+      if (audioSource) {
+        try { audioSource.stop(); } catch { /* already stopped */ }
+      }
+      if (audioCtx) {
+        await audioCtx.close();
+      }
+
       const videoBlob = await recordingDone;
+
+      // ── Validate blob before uploading ──
+      console.log(`Video blob size: ${videoBlob.size} bytes, type: ${videoBlob.type}`);
+      if (videoBlob.size < 1000) {
+        throw new Error(
+          `Generated video is too small (${videoBlob.size} bytes). ` +
+          "Recording may have failed — try a different browser or fewer images."
+        );
+      }
 
       // ── Upload to Convex storage ──
       setProgress(100);
       toast.success("Uploading reel...");
 
+      // Extract clean MIME base type without codecs (e.g. "video/webm;codecs=vp9,opus" → "video/webm")
+      const cleanMime = (videoBlob.type || "video/webm").split(";")[0].trim();
+      console.log(`Uploading: ${videoBlob.size} bytes, raw type="${videoBlob.type}", clean type="${cleanMime}"`);
+
       const uploadUrl = await generateUploadUrl();
       const uploadRes = await fetch(uploadUrl, {
         method: "POST",
-        headers: { "Content-Type": videoBlob.type },
+        headers: { "Content-Type": cleanMime },
         body: videoBlob,
       });
 
-      if (!uploadRes.ok) throw new Error("Upload failed");
-      const { storageId } = await uploadRes.json();
+      if (!uploadRes.ok) {
+        const errText = await uploadRes.text().catch(() => "unknown");
+        console.error(`Upload failed: status=${uploadRes.status}, body=${errText}`);
+        throw new Error(`Upload failed (${uploadRes.status}): ${errText}`);
+      }
 
-      // Save image previews as data URLs for thumbnails
-      const imageDataUrls = images.map((img) => img.preview);
+      const uploadData = await uploadRes.json();
+      console.log("Upload response:", uploadData);
+      const storageId = uploadData.storageId;
+      if (!storageId) {
+        throw new Error("No storageId returned from upload");
+      }
 
-      const reelId = await createReel({
-        title,
-        description,
-        imageUrls: imageDataUrls,
-        storageId: storageId as Id<"_storage">,
-      });
+      // Convert blob URLs to small base64 thumbnails so they persist
+      const imageDataUrls: string[] = [];
+      for (const img of images) {
+        try {
+          const thumbUrl = await blobUrlToThumbnail(img.preview, 200, 356);
+          imageDataUrls.push(thumbUrl);
+        } catch {
+          imageDataUrls.push(""); // skip broken images
+        }
+      }
+
+      console.log("Creating reel with storageId:", storageId, "images:", imageDataUrls.length);
+
+      try {
+        await createReel({
+          title,
+          description,
+          imageUrls: imageDataUrls,
+          storageId: storageId as Id<"_storage">,
+          duration,
+        });
+      } catch (createErr) {
+        console.error("createReel mutation failed:", createErr);
+        throw new Error(
+          `Save failed: ${createErr instanceof Error ? createErr.message : String(createErr)}`
+        );
+      }
 
       // Reset form
       setTitle("");
@@ -321,7 +449,11 @@ function VidSnapPage() {
       toast.success("Reel created successfully! 🎬");
     } catch (err) {
       console.error("Reel generation failed:", err);
-      toast.error("Failed to create reel. Please try again.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Failed to create reel. Please try again."
+      );
     } finally {
       setIsProcessing(false);
       setProgress(0);
@@ -349,6 +481,30 @@ function VidSnapPage() {
     }
     if (currentLine) lines.push(currentLine);
     return lines.slice(0, 3); // Max 3 lines
+  }
+
+  // ── Convert a blob URL to a small base64 thumbnail ──
+  async function blobUrlToThumbnail(
+    blobUrl: string,
+    maxW: number,
+    maxH: number
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const c = document.createElement("canvas");
+        // Maintain aspect ratio within maxW × maxH
+        const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        const cx = c.getContext("2d")!;
+        cx.drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL("image/jpeg", 0.6)); // JPEG @ 60% → small
+      };
+      img.onerror = reject;
+      img.src = blobUrl;
+    });
   }
 
   // ── Loading state ─────────────────────

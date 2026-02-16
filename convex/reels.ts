@@ -17,6 +17,7 @@ export const create = mutation({
     description: v.string(),
     imageUrls: v.array(v.string()),
     storageId: v.optional(v.id("_storage")),
+    duration: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -29,7 +30,11 @@ export const create = mutation({
 
     let videoUrl: string | undefined;
     if (args.storageId) {
-      videoUrl = (await ctx.storage.getUrl(args.storageId)) ?? undefined;
+      try {
+        videoUrl = (await ctx.storage.getUrl(args.storageId)) ?? undefined;
+      } catch (e) {
+        console.warn("Could not get storage URL:", e);
+      }
     }
 
     return await ctx.db.insert("reels", {
@@ -42,6 +47,7 @@ export const create = mutation({
       storageId: args.storageId,
       videoUrl,
       status: args.storageId ? "ready" : "processing",
+      duration: args.duration,
       likeCount: 0,
       likedBy: [],
       viewCount: 0,
