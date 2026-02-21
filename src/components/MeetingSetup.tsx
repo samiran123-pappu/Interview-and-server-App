@@ -8,6 +8,7 @@ import { Button } from "./ui/button";
 function MeetingSetup({ onSetupComplete }: { onSetupComplete: () => void }) {
   const [isCameraDisabled, setIsCameraDisabled] = useState(true);
   const [isMicDisabled, setIsMicDisabled] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
 
   const call = useCall();
 
@@ -27,8 +28,15 @@ function MeetingSetup({ onSetupComplete }: { onSetupComplete: () => void }) {
   }, [isMicDisabled, call.microphone]);
 
   const handleJoin = async () => {
-    await call.join();
-    onSetupComplete();
+    if (isJoining) return;
+    setIsJoining(true);
+    try {
+      await call.join();
+      onSetupComplete();
+    } catch (error) {
+      console.error("Failed to join call:", error);
+      setIsJoining(false);
+    }
   }
 
 
@@ -112,8 +120,8 @@ function MeetingSetup({ onSetupComplete }: { onSetupComplete: () => void }) {
                 </div>
                 {/* JOIN BTN */}
                 <div className="space-y-3 mt-8">
-                  <Button className="w-full" size="lg" onClick={handleJoin}>
-                    Join Meeting
+                  <Button className="w-full" size="lg" onClick={handleJoin} disabled={isJoining}>
+                    {isJoining ? "Joining..." : "Join Meeting"}
                   </Button>
                   <p className="text-xs text-center text-muted-foreground">
                     Do not worry, our team is super friendly! We want you to succeed. 🎉
