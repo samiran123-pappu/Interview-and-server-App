@@ -3,13 +3,12 @@
 import Link from "next/link"
 import { Button } from "./ui/button"
 import { SparklesIcon } from "lucide-react"
-import { useUserRole } from "@/hooks/useUserRole";
+import { useViewMode } from "@/hooks/useViewMode";
 
 function DashboardBtn() {
-    const { isLoading, isCandidate} = useUserRole();
-   
+    const { isInterviewerView } = useViewMode();
 
-    if(isCandidate || isLoading) return null;
+    if (!isInterviewerView) return null;
   return (
     <Link href={"/dashboard"}>
         <Button className="gap-2 font-medium" size={"sm"}>
@@ -17,7 +16,6 @@ function DashboardBtn() {
             Dashboard
         </Button>
     </Link>
- 
   )
 }
 

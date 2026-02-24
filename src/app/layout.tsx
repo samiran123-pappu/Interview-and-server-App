@@ -4,6 +4,7 @@ import "@stream-io/video-react-sdk/dist/css/styles.css";
 import "./globals.css";
 import ConvexClerkProvider from "@/components/providers/ConvexClerkProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { ViewModeProvider } from "@/hooks/useViewMode";
 import Navbar from "@/components/Navbar";
 import { RedirectToSignIn, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Toaster } from "react-hot-toast";
@@ -43,10 +44,12 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <SignedIn>
+            <ViewModeProvider>
             <div className="min-h-screen">
               <Navbar />
               <main className="px-4 sm:px-6 lg:px-8">{children}</main>
             </div>
+            </ViewModeProvider>
             </SignedIn>
             <SignedOut>
               <RedirectToSignIn />

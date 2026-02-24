@@ -2,7 +2,8 @@
 import ActionCard from "@/components/ActionCard"
 import { QUICK_ACTIONS } from "@/constants"
 import { useUserRole } from "@/hooks/useUserRole"
-import { Loader2Icon, ZapIcon, FlameIcon, TrophyIcon, CodeIcon, ArrowRightIcon, PlusIcon, CircleIcon } from "lucide-react"
+import { useViewMode } from "@/hooks/useViewMode"
+import { Loader2Icon, ZapIcon, FlameIcon, TrophyIcon, CodeIcon, ArrowRightIcon, PlusIcon, CircleIcon, BriefcaseIcon, GraduationCapIcon } from "lucide-react"
 import { useState } from "react"
 import { api } from "../../../../convex/_generated/api";
 import { useRouter } from "next/navigation"
@@ -26,6 +27,7 @@ export default function Home() {
   const { user: clerkUser, isLoaded, isSignedIn } = useUser();
   const authenticated = isLoaded && isSignedIn;
   const { isInterviewer, isCandidate } = useUserRole()
+  const { viewMode, setViewMode, isInterviewerView, isCandidateView, hasChosenMode } = useViewMode()
   const [showModal, setShowModal] = useState(false)
   const interviews = useQuery(api.interviews.getMyInterviews, authenticated ? {} : "skip");
   const me = useQuery(api.users.getMe, authenticated ? {} : "skip");
@@ -181,7 +183,7 @@ export default function Home() {
         Welcome back{me?.name ? `, ${me.name.split(" ")[0]}` : ""}!
       </h1>
       <p className="text-muted-foreground mt-2">
-        {isInterviewer ? "Manage interviews, explore spaces, and connect with the community." : "Practice coding, join spaces, and track your progress."}
+        {isInterviewerView ? "Manage interviews, explore spaces, and connect with the community." : isCandidateView ? "Practice coding, join spaces, and track your progress." : "Choose your role below to get started."}
       </p>
 
       {/* Quick Stats */}
@@ -207,7 +209,42 @@ export default function Home() {
       )}
     </div>
 
-    {isInterviewer ? (
+    {/* ── VIEW MODE TOGGLE ─────────────────────────────────── */}
+    <div className="flex flex-wrap items-center gap-3 mb-8">
+      <button
+        onClick={() => setViewMode("interviewer")}
+        className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm border-2 transition-all duration-200 ${
+          isInterviewerView
+            ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-md shadow-emerald-500/10"
+            : "border-muted hover:border-emerald-500/50 text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        <BriefcaseIcon className="h-5 w-5" />
+        Be an Interviewer
+      </button>
+      <button
+        onClick={() => setViewMode("candidate")}
+        className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm border-2 transition-all duration-200 ${
+          isCandidateView
+            ? "border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400 shadow-md shadow-blue-500/10"
+            : "border-muted hover:border-blue-500/50 text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        <GraduationCapIcon className="h-5 w-5" />
+        Be a Candidate
+      </button>
+      {hasChosenMode && (
+        <span className="text-xs text-muted-foreground ml-1">
+          Currently viewing as <span className="font-semibold capitalize">{viewMode}</span>
+        </span>
+      )}
+    </div>
+
+    {!hasChosenMode ? (
+      <div className="text-center py-16 border-2 border-dashed rounded-xl">
+        <p className="text-lg text-muted-foreground">Choose a role above to get started</p>
+      </div>
+    ) : isInterviewerView ? (
       <>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {QUICK_ACTIONS.map((action) => (
